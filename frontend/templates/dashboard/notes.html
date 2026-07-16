@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VaultSync - Secure Notes</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="alert-container" id="alertContainer"></div>
+
+    <div class="dashboard-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <span class="brand-name">VaultSync</span>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li class="menu-item" id="menu-passwords" onclick="window.location.href = '/home'">
+                    <button><i class="fas fa-key"></i> Passwords</button>
+                </li>
+                <li class="menu-item active" id="menu-notes" onclick="window.location.href = '/notes'">
+                    <button><i class="fas fa-file-alt"></i> Secure Notes</button>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <li class="menu-item" style="list-style: none;">
+                    <button onclick="handleLogout()" style="color: var(--danger);"><i class="fas fa-sign-out-alt"></i> Log Out</button>
+                </li>
+            </div>
+        </aside>
+
+        <!-- Main Body Content -->
+        <main class="main-content">
+            <header class="topbar">
+                <h1 class="page-title" id="pageTitle">Secure Notes</h1>
+            </header>
+
+            <div class="content-body">
+                <!-- NOTES SCREEN -->
+                <section id="view-notes" class="screen-view active">
+                    <div class="action-bar">
+                        <div class="search-wrapper">
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" class="search-input" id="searchNotes" placeholder="Search notes..." onkeyup="filterNotes()">
+                        </div>
+                        <button class="btn btn-primary" onclick="openModal('addNoteModal')" style="background: (135deg, #007B8A 100%);">
+                            <i class="fas fa-plus"></i> Add  Note
+                        </button>
+                    </div>
+
+                    <div id="noteEmptyState" class="empty-state" style="display: none;">
+                        <i class="fas fa-file-signature empty-state-icon"></i>
+                        <h3>No secure notes saved</h3>
+                        <p>Write down keys, code snippets, or personal text records here.</p>
+                    </div>
+
+                    <div class="vault-grid" id="notesGrid">
+                        <!-- Note Cards Dynamically Loaded here -->
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- ADD NOTE MODAL -->
+    <div class="modal-overlay" id="addNoteModal">
+        <div class="modal-content glass">
+            <div class="modal-header">
+                <h3 class="modal-title">Create Secure Note</h3>
+                <button class="modal-close" onclick="closeModal('addNoteModal')">&times;</button>
+            </div>
+            <form id="addNoteForm">
+                <div class="form-group">
+                    <label for="addNoteTitle">Note Title</label>
+                    <input type="text" id="addNoteTitle" class="input-control" placeholder="Add your heading" required>
+                </div>
+                <div class="form-group">
+                    <label for="addNoteContent">Secure Content</label>
+                    <textarea id="addNoteContent" class="input-control" rows="6" placeholder="Write your secret notes details here..." style="resize: vertical; font-family: inherit;" required></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addNoteModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #005F6B 100%);">Save Note</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- EDIT NOTE MODAL -->
+    <div class="modal-overlay" id="editNoteModal">
+        <div class="modal-content glass">
+            <div class="modal-header">
+                <h3 class="modal-title">Edit Secure Note</h3>
+                <button class="modal-close" onclick="closeModal('editNoteModal')">&times;</button>
+            </div>
+            <form id="editNoteForm">
+                <input type="hidden" id="editNoteId">
+                <div class="form-group">
+                    <label for="editNoteTitle">Note Title</label>
+                    <input type="text" id="editNoteTitle" class="input-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="editNoteContent">Secure Content</label>
+                    <textarea id="editNoteContent" class="input-control" rows="6" style="resize: vertical; font-family: inherit;" required></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('editNoteModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);">Update Note</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-message" class="toast hidden" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;"></div>
+
+    <script>
+        let cachedNotes = [];
+        let currentUser = null;
+
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        // JS Helper Functions
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function showToast(message, type) {
+            const toast = document.getElementById('toast-message');
+            toast.textContent = message;
+            toast.className = `toast ${type}`;
+            toast.classList.remove('hidden');
+            setTimeout(hideToast, 3000);
+        }
+
+        function hideToast() {
+            const toast = document.getElementById('toast-message');
+            toast.className = 'toast hidden';
+        }
+
+        // --- PROFILE LOADING ---
+        async function loadProfile() {
+            try {
+                const response = await fetch('/api/user/profile');
+                if (response.ok) {
+                    const result = await response.json();
+                    currentUser = result.user;
+                } else if (response.status === 401) {
+                    window.location.href = '/';
+                }
+            } catch (err) {
+                console.error("Error loading user profile", err);
+            }
+        }
+
+        // --- SECURE NOTES CONTROLLER ---
+        async function fetchNotes() {
+            const grid = document.getElementById('notesGrid');
+            const emptyState = document.getElementById('noteEmptyState');
+            grid.innerHTML = '';
+
+            try {
+                const response = await fetch('/api/notes');
+                if (response.ok) {
+                    const result = await response.json();
+                    cachedNotes = result.notes;
+
+                    if (cachedNotes.length === 0) {
+                        emptyState.style.display = 'block';
+                        return;
+                    }
+                    emptyState.style.display = 'none';
+
+                    cachedNotes.forEach(item => {
+                        const card = document.createElement('div');
+                        card.className = 'note-card glass';
+                        card.id = `note-card-${item.id}`;
+                        card.innerHTML = `
+                            <div>
+                                <div class="note-header">
+                                    <h4 class="note-title">${escapeHtml(item.title)}</h4>
+                                </div>
+                                <div class="note-body">${escapeHtml(item.content)}</div>
+                            </div>
+                            <div class="card-actions">
+                                <button class="btn btn-secondary btn-icon" style="padding: 0.45rem 0.75rem;" onclick="triggerEditNote(${item.id})">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button class="btn btn-danger btn-icon" style="padding: 0.45rem 0.75rem;" onclick="deleteNoteRecord(${item.id})">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        `;
+                        grid.appendChild(card);
+                    });
+                }
+            } catch (err) {
+                console.error("Error retrieving notes", err);
+                showToast("Failed to fetch secure notes.", "error");
+            }
+        }
+
+        document.getElementById('addNoteForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = document.getElementById('addNoteTitle').value;
+            const content = document.getElementById('addNoteContent').value;
+
+            try {
+                const response = await fetch('/api/notes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, content })
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    showToast(result.message, 'success');
+                    closeModal('addNoteModal');
+                    document.getElementById('addNoteForm').reset();
+                    fetchNotes();
+                } else {
+                    showToast(result.message, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Failed to save note.", "error");
+            }
+        });
+
+        function triggerEditNote(id) {
+            const item = cachedNotes.find(n => n.id === id);
+            if (!item) return;
+
+            document.getElementById('editNoteId').value = item.id;
+            document.getElementById('editNoteTitle').value = item.title;
+            document.getElementById('editNoteContent').value = item.content;
+            
+            openModal('editNoteModal');
+        }
+
+        document.getElementById('editNoteForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('editNoteId').value;
+            const title = document.getElementById('editNoteTitle').value;
+            const content = document.getElementById('editNoteContent').value;
+
+            try {
+                const response = await fetch(`/api/notes/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, content })
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    showToast(result.message, 'success');
+                    closeModal('editNoteModal');
+                    fetchNotes();
+                } else {
+                    showToast(result.message, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Failed to update note.", "error");
+            }
+        });
+
+        async function deleteNoteRecord(id) {
+            if (!confirm("Are you sure you want to delete this secure note?")) return;
+
+            try {
+                const response = await fetch(`/api/notes/${id}`, {
+                    method: 'DELETE'
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    showToast(result.message, 'success');
+                    fetchNotes();
+                } else {
+                    showToast(result.message, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Failed to delete note.", "error");
+            }
+        }
+
+        function filterNotes() {
+            const query = document.getElementById('searchNotes').value.toLowerCase();
+            const cards = document.querySelectorAll('#notesGrid .note-card');
+
+            cards.forEach(card => {
+                const title = card.querySelector('.note-title').textContent.toLowerCase();
+                const body = card.querySelector('.note-body').textContent.toLowerCase();
+                if (title.includes(query) || body.includes(query)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // --- LOGOUT CONTROLLER ---
+        async function handleLogout() {
+            if (!confirm("Confirm logging out of VaultSync?")) return;
+            try {
+                const response = await fetch('/api/logout', { method: 'POST' });
+                const result = await response.json();
+                if (response.ok) {
+                    localStorage.removeItem('currentUser');
+                    window.location.href = result.redirect;
+                }
+            } catch (err) {
+                console.error("Logout failed", err);
+            }
+        }
+
+        // Run on Mount
+        window.addEventListener('DOMContentLoaded', () => {
+            loadProfile();
+            fetchNotes();
+        });
+    </script>
+</body>
+</html>
