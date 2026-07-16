@@ -22,9 +22,9 @@ def manage_passwords():
     elif request.method == 'POST':
         data = request.get_json() or {}
         # Support both 'website_name'/'username' (frontend) and 'Website or Applicatione'/'Username / Email' (user script) keys
-        website_name = (data.get('website_name') or data.get('Website or Applicatione') or '').strip()
-        username = (data.get('username') or data.get('Username / Email') or '').strip()
-        password = (data.get('password') or '').strip()
+        website_name =  (data.get('website_name')  or '').strip()
+        username =      (data.get('username') or '').strip()
+        password =      (data.get('password') or '').strip()
         
         if not website_name or not username or not password:
             return jsonify({'status': 'error', 'message': 'All fields are required.'}), 400

@@ -45,7 +45,7 @@ def manage_note_by_id(note_id):
     if request.method == 'PUT':
         data = request.get_json() or {}
         title = (data.get('title') or '').strip()
-        content = (data.get('content') or data.get('Secure_Content') or '').strip()
+        content = (data.get('content') or '').strip()
         
         if not title or not content:
             return jsonify({'status': 'error', 'message': 'Title and content are required.'}), 400
