@@ -72,11 +72,11 @@ SENDER_EMAIL=your_email@gmail.com
 SENDER_APP_PASSWORD=your_gmail_app_password
 
 # Database Configuration
-DB_HOST=127.0.0.1
-DB_PORT=3306
+DB_HOST=your_host_address
+DB_PORT=Your_port_address
 DB_USER=root
 DB_PASSWORD=your_mysql_password
-DB_NAME=vaultsync
+DB_NAME=your_DB_name
 ```
 
 > [!TIP]
@@ -107,4 +107,4 @@ Start the Flask dev server:
 python backend/app.py
 ```
 
-The application will run on `http://127.0.0.1:5000`. The database and its required tables will be automatically initialized and created on start.
+The application will run on the linked generated in the terminal . The database and its required tables will be automatically initialized and created on start.
