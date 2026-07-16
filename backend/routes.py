@@ -2,8 +2,8 @@ from flask import Blueprint, render_template
 from registration import verified_otp_page, set_password_page, signup, verify_otp_api, resend_otp_api, set_password_api
 from sign_up import login
 from auth import get_user_profile, logout
-from dashboard.Password_app import manage_passwords, manage_password_by_id
-from dashboard.notes import manage_notes, manage_note_by_id
+from backend.dashboard.password_page.Password_app import manage_passwords, manage_password_by_id
+from backend.dashboard.notes_page.notes import manage_notes, manage_note_by_id
 
 # Define blueprints
 main_bp = Blueprint('main', __name__)

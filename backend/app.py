@@ -3,6 +3,7 @@ import sys
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, base_dir)
+sys.path.insert(0, os.path.abspath(os.path.join(base_dir, '..')))
 
 from flask import Flask
 from utils import init_db
