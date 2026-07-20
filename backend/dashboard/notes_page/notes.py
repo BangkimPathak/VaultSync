@@ -22,8 +22,8 @@ def manage_notes():
     elif request.method == 'POST':
         data = request.get_json() or {}
         # Support both 'title'/'content' (frontend) and 'Note Title'/'Secure Content' (user script) keys
-        title = (data.get('title') or data.get('Note Title') or '').strip()
-        content = (data.get('content') or data.get('Secure Content') or '').strip()
+        title = (data.get('title') or '').strip()
+        content = (data.get('content') or'').strip()
         
         if not title or not content:
             return jsonify({'status': 'error', 'message': 'Title and content are required.'}), 400

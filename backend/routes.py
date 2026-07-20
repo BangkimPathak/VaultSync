@@ -2,7 +2,7 @@ from flask import Blueprint, render_template
 from registration import verified_otp_page, set_password_page, signup, verify_otp_api, resend_otp_api, set_password_api
 from sign_up import login
 from auth import get_user_profile, logout
-from backend.dashboard.password_page.Password_app import manage_passwords, manage_password_by_id
+from backend.dashboard.password_Vault_page.Password_Vault import manage_passwords, manage_password_by_id
 from backend.dashboard.notes_page.notes import manage_notes, manage_note_by_id
 
 # Define blueprints
@@ -36,7 +36,7 @@ registration_bp.route('/api/set-password', methods=['POST'])(set_password_api)
 # Register Sign Up/Login routes
 signup_bp.route('/api/login', methods=['POST'])(login)
 
-# Register Dashboard API routes
+# Dashboard API routes
 dashboard_bp.route('/api/user/profile')(get_user_profile)
 dashboard_bp.route('/api/passwords', methods=['GET', 'POST'])(manage_passwords)
 dashboard_bp.route('/api/passwords/<int:pwd_id>', methods=['PUT', 'DELETE'])(manage_password_by_id)

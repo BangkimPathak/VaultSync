@@ -1,5 +1,5 @@
 from flask import request, jsonify, session
-from backend.dashboard.password_page.pasword_db import (
+from backend.dashboard.password_Vault_page.pasword_db import (
     get_passwords,
     insert_password,
     verify_ownership,
