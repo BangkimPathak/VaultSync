@@ -101,3 +101,82 @@ def delete_note(note_id, email):
     finally:
         if cursor: cursor.close()
         if conn: conn.close()
+
+def get_images(email):
+    """Fetches all uploaded images for a given user email."""
+    conn = None
+    cursor = None
+    try:
+        conn = get_db_connection()
+        if conn is None:
+            raise Exception("Database connection failed.")
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT id, filename, original_name, created_at FROM user_images WHERE user_email = %s ORDER BY created_at DESC", (email,))
+        images = cursor.fetchall()
+        return images
+    except Error as e:
+        print(f"Error fetching images: {e}")
+        raise e
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+def insert_image(email, filename, original_name):
+    """Inserts a new image upload record into the database."""
+    conn = None
+    cursor = None
+    try:
+        conn = get_db_connection()
+        if conn is None:
+            raise Exception("Database connection failed.")
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO user_images (user_email, filename, original_name) VALUES (%s, %s, %s)",
+            (email, filename, original_name)
+        )
+        conn.commit()
+        return True
+    except Error as e:
+        print(f"Error inserting image record: {e}")
+        raise e
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+def verify_image_ownership(image_id, email):
+    """Verifies that the requested image belongs to the specified user."""
+    conn = None
+    cursor = None
+    try:
+        conn = get_db_connection()
+        if conn is None:
+            raise Exception("Database connection failed.")
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT filename FROM user_images WHERE id = %s AND user_email = %s", (image_id, email))
+        record = cursor.fetchone()
+        return record
+    except Error as e:
+        print(f"Error checking image ownership: {e}")
+        raise e
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+def delete_image_db(image_id, email):
+    """Deletes an image record from the database."""
+    conn = None
+    cursor = None
+    try:
+        conn = get_db_connection()
+        if conn is None:
+            raise Exception("Database connection failed.")
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM user_images WHERE id = %s AND user_email = %s", (image_id, email))
+        conn.commit()
+        return True
+    except Error as e:
+        print(f"Error deleting image from database: {e}")
+        raise e
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()

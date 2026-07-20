@@ -3,7 +3,12 @@ from registration import verified_otp_page, set_password_page, signup, verify_ot
 from sign_up import login
 from auth import get_user_profile, logout
 from backend.dashboard.password_Vault_page.Password_Vault import manage_passwords, manage_password_by_id
-from backend.dashboard.notes_page.notes import manage_notes, manage_note_by_id
+from backend.dashboard.notes_page.notes import (
+    manage_notes,
+    manage_note_by_id,
+    manage_images,
+    delete_image
+)
 
 # Define blueprints
 main_bp = Blueprint('main', __name__)
@@ -20,10 +25,14 @@ def home():
 def notes_page():
     return render_template('dashboard/notes.html')
 
+def note_pic_page():
+    return render_template('dashboard/note_pic.html')
+
 # Register HTML/Main routes
 main_bp.route('/')(index)
 main_bp.route('/home')(home)
 main_bp.route('/notes')(notes_page)
+main_bp.route('/note-pic')(note_pic_page)
 
 # Register Registration routes
 registration_bp.route('/verify-otp')(verified_otp_page)
@@ -42,6 +51,8 @@ dashboard_bp.route('/api/passwords', methods=['GET', 'POST'])(manage_passwords)
 dashboard_bp.route('/api/passwords/<int:pwd_id>', methods=['PUT', 'DELETE'])(manage_password_by_id)
 dashboard_bp.route('/api/notes', methods=['GET', 'POST'])(manage_notes)
 dashboard_bp.route('/api/notes/<int:note_id>', methods=['PUT', 'DELETE'])(manage_note_by_id)
+dashboard_bp.route('/api/images', methods=['GET', 'POST'])(manage_images)
+dashboard_bp.route('/api/images/<int:image_id>', methods=['DELETE'])(delete_image)
 dashboard_bp.route('/api/logout', methods=['POST'])(logout)
 
 def register_routes(app):

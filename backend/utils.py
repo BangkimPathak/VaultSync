@@ -13,7 +13,7 @@ load_dotenv()
 
 DB_HOST = os.environ.get("DB_HOST")
 DB_PORT_ENV = os.environ.get("DB_PORT")
-DB_PORT = int(DB_PORT_ENV) if DB_PORT_ENV else 3306
+DB_PORT = int(DB_PORT_ENV)
 DB_USER = os.environ.get("DB_USER", "root")
 DB_PASSWORD = os.environ.get("DB_PASSWORD")
 DB_NAME = os.environ.get("DB_NAME", "patient_records")
@@ -146,6 +146,18 @@ def create_database_tables(cursor):
             website_name VARCHAR(255) NOT NULL,
             username VARCHAR(255) NOT NULL,
             password VARCHAR(255) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_email) REFERENCES users(email) ON DELETE CASCADE
+        )
+    """)
+
+    # Create user_images table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_images (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_email VARCHAR(100) NOT NULL,
+            filename VARCHAR(255) NOT NULL,
+            original_name VARCHAR(255) NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_email) REFERENCES users(email) ON DELETE CASCADE
         )

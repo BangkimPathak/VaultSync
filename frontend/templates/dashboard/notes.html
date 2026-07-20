@@ -6,6 +6,112 @@
     <title>VaultSync - Secure Notes</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .gallery-card {
+            background: rgba(255, 255, 255, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.015);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .gallery-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1);
+        }
+        .img-container {
+            width: 100%;
+            height: 160px;
+            overflow: hidden;
+            background: #111;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+        }
+        .img-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        .gallery-card:hover .img-container img {
+            transform: scale(1.05);
+        }
+        .img-details {
+            padding: 1rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .img-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #064e3b; /* Dark emerald green to match notes */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 0.5rem;
+        }
+        .img-meta {
+            font-size: 0.75rem;
+            color: #1b4d3e; /* Dark shaded green meta text */
+        }
+        .img-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            border-top: 1px solid rgba(15, 23, 42, 0.08);
+            padding-top: 0.75rem;
+        }
+        .lightbox-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+        .lightbox-modal.active {
+            display: flex;
+        }
+        .lightbox-content {
+            max-width: 90%;
+            max-height: 85%;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 2.5rem;
+            color: #fff;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        .lightbox-close:hover {
+            opacity: 1;
+        }
+    </style>
 </head>
 <body>
     <div class="alert-container" id="alertContainer"></div>
@@ -50,8 +156,13 @@
                         <button class="btn btn-primary" onclick="openModal('addNoteModal')" style="background: linear-gradient(135deg, #007B8A 100%);">
                             <i class="fas fa-plus"></i> Add  Note
                         </button>
+                        <button class="btn btn-primary" onclick="window.location.href = '/note-pic'" style="background: linear-gradient(135deg, #007B8A 100%);">
+                            <i class="fas fa-plus"></i> Add  Image
+                        </button>
                     </div>
 
+                    <!-- SECURE NOTES SECTION -->
+                    <h2 style="color: #095567; margin-top: 1.5rem; margin-bottom: 1rem; font-size: 1.35rem; font-weight: 600;">Secure Notes</h2>
                     <div id="noteEmptyState" class="empty-state" style="display: none;">
                         <i class="fas fa-file-signature empty-state-icon"></i>
                         <h3>No secure notes saved</h3>
@@ -61,6 +172,28 @@
                     <div class="vault-grid" id="notesGrid">
                         <!-- Note Cards Dynamically Loaded here -->
                     </div>
+
+                    <!-- SECURE IMAGES SECTION -->
+                    <h2 style="color: #095567; margin-top: 3rem; margin-bottom: 1rem; font-size: 1.35rem; font-weight: 600;">Secure Images</h2>
+                    <div id="imageEmptyState" class="empty-state" style="display: none;">
+                        <i class="fas fa-images empty-state-icon" style="font-size: 3rem; opacity: 0.3;"></i>
+                        <h3>No secure images saved</h3>
+                        <p>Upload screenshots or secure image documents locally.</p>
+                    </div>
+
+                    <!-- GALLERY GRID -->
+                    <div class="gallery-grid" id="galleryGrid">
+                        <!-- Image Cards Dynamically Loaded here -->
+                    </div>
+
+                    <!-- Lightbox View -->
+                    <div class="lightbox-modal" id="lightbox" onclick="closeLightbox()">
+                        <span class="lightbox-close">&times;</span>
+                        <img class="lightbox-content" id="lightboxImg" src="" alt="Fullscreen preview">
+                    </div>
+
+                    <!-- Toast Notification Container -->
+                    <div id="toast-message" class="toast hidden" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;"></div>
                 </section>
             </div>
         </main>
@@ -115,20 +248,33 @@
         </div>
     </div>
 
-    <!-- Toast Notification Container -->
-    <div id="toast-message" class="toast hidden" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;"></div>
+
 
     <script>
         let cachedNotes = [];
+        let cachedImages = [];
         let currentUser = null;
 
         function openModal(id) {
-            document.getElementById(id).classList.add('active');
+            document.getElementById(id).classList.add('active');  
         }
-
+   
         function closeModal(id) {
             document.getElementById(id).classList.remove('active');
         }
+// --- LIGHTBOX FUNCTIONS ---
+        function openLightbox(src) {
+            const modal = document.getElementById('lightbox');
+            const img = document.getElementById('lightboxImg');
+            img.src = src;
+            modal.classList.add('active');
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').classList.remove('active');
+        }
+
+        
 
         // JS Helper Functions
         function escapeHtml(str) {
@@ -312,6 +458,92 @@
                     card.style.display = 'none';
                 }
             });
+
+            const imageCards = document.querySelectorAll('#galleryGrid .gallery-card');
+            imageCards.forEach(card => {
+                const title = card.querySelector('.img-title').textContent.toLowerCase();
+                if (title.includes(query)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // --- SECURE IMAGES CONTROLLER ---
+        async function fetchImages() {
+            const grid = document.getElementById('galleryGrid');
+            const emptyState = document.getElementById('imageEmptyState');
+            grid.innerHTML = '';
+            
+            try {
+                const response = await fetch('/api/images');
+                if (response.ok) {
+                    const result = await response.json();
+                    cachedImages = result.images;
+                    
+                    if (cachedImages.length === 0) {
+                        emptyState.style.display = 'block';
+                        return;
+                    }
+                    emptyState.style.display = 'none';
+
+                    cachedImages.forEach(item => {
+                        const card = document.createElement('div');
+                        card.className = 'gallery-card glass';
+                        card.id = `img-card-${item.id}`;
+                        
+                        const uploadUrl = `/static/uploads/${item.filename}`;
+                        const formattedDate = new Date(item.created_at).toLocaleDateString(undefined, {
+                            year: 'numeric', month: 'short', day: 'numeric'
+                        });
+
+                        card.innerHTML = `
+                            <div class="img-container" onclick="openLightbox('${uploadUrl}')">
+                                <img src="${uploadUrl}" alt="${item.original_name}" loading="lazy">
+                            </div>
+                            <div class="img-details">
+                                <div>
+                                    <h4 class="img-title" title="${item.original_name}">${item.original_name}</h4>
+                                    <span class="img-meta">${formattedDate}</span>
+                                </div>
+                                <div class="img-actions">
+                                    <a href="${uploadUrl}" download="${item.original_name}" class="btn btn-secondary" style="padding: 0.35rem 0.6rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.25rem;" onclick="event.stopPropagation()">
+                                        <i class="fas fa-download"></i> Save
+                                    </a>
+                                    <button class="btn btn-danger" style="padding: 0.35rem 0.6rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.25rem;" onclick="event.stopPropagation(); deleteImageRecord(${item.id})">
+                                        <i class="fas fa-trash-alt"></i> Delete
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        grid.appendChild(card);
+                    });
+                }
+            } catch (err) {
+                console.error("Error retrieving images", err);
+                showToast("Failed to fetch secure images.", "error");
+            }
+        }
+
+        async function deleteImageRecord(id) {
+            if (!confirm("Are you sure you want to delete this secure document/image permanently?")) return;
+
+            try {
+                const response = await fetch(`/api/images/${id}`, {
+                    method: 'DELETE'
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    showToast(result.message, 'success');
+                    fetchImages();
+                } else {
+                    showToast(result.message, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Failed to delete record.", "error");
+            }
         }
 
         // --- LOGOUT CONTROLLER ---
@@ -333,6 +565,7 @@
         window.addEventListener('DOMContentLoaded', () => {
             loadProfile();
             fetchNotes();
+            fetchImages();
         });
     </script>
 </body>
