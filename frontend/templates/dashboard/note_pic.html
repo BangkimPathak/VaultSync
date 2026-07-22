@@ -6,14 +6,15 @@
     <title>VaultSync - Secure Images</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Embla Carousel Core CDN -->
+    <script src="https://unpkg.com/embla-carousel/embla-carousel.umd.js"></script>
     <style>
         .upload-section {
             background: rgba(255, 255, 255, 0.05);
             border: 2px dashed rgba(255, 255, 255, 0.2);
             border-radius: 12px;
-            padding: 4rem 2.5rem;
+            padding: 2.5rem;
             text-align: center;
-            margin-top: 2rem;
             margin-bottom: 2rem;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -24,9 +25,9 @@
             box-shadow: 0 0 15px rgba(0, 123, 138, 0.2);
         }
         .upload-icon {
-            font-size: 4rem;
+            font-size: 3rem;
             color: var(--primary);
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
             transition: transform 0.3s ease;
         }
         .upload-section:hover .upload-icon {
@@ -35,18 +36,230 @@
         .file-input {
             display: none;
         }
-        .back-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 500;
-            margin-bottom: 1.5rem;
-            transition: color 0.2s;
+
+        /* Embla Viewport and Slides styling */
+        .embla {
+            width: 100%;
+            position: relative;
+            padding: 2rem 0;
         }
-        .back-link:hover {
-            color: #047c8c;
+
+        .embla__viewport {
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .embla__container {
+            display: flex;
+            height: 420px;
+            align-items: center;
+        }
+
+        .embla__slide {
+            position: relative;
+            flex: 0 0 73%;
+            min-width: 0;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
+        }
+
+        @media (min-width: 640px) {
+            .embla__slide { flex: 0 0 50%; }
+        }
+        @media (min-width: 768px) {
+            .embla__slide { flex: 0 0 35%; }
+        }
+        @media (min-width: 1024px) {
+            .embla__slide { flex: 0 0 25%; }
+        }
+
+        /* Slide inner card containing image */
+        .embla__card-inner {
+            width: 100%;
+            height: 81.5%;
+            overflow: hidden;
+            border-radius: 2rem;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.1);
+            background: #111;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: clip-path 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+            cursor: pointer;
+            /* Inactive compressed state */
+            clip-path: inset(12% 0 12% 0 round 2rem);
+        }
+
+        .embla__card-inner img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scale(1.05);
+            transition: transform 0.6s ease;
+            pointer-events: none;
+        }
+
+        /* Selected slide style */
+        .embla__slide.is-selected .embla__card-inner {
+            clip-path: inset(0 0 0 0 round 2rem);
+        }
+
+        .embla__slide.is-selected .embla__card-inner img {
+            transform: scale(1.0);
+        }
+
+        /* Title text styled below the active slide */
+        .embla__title-label {
+            height: 14%;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: rgba(15, 23, 42, 0.5);
+            opacity: 0;
+            filter: blur(8px);
+            transform: translateY(10px);
+            transition: opacity 0.5s ease, filter 0.5s ease, transform 0.5s ease;
+            pointer-events: none;
+            margin-top: 0.5rem;
+        }
+
+        .embla__slide.is-selected .embla__title-label {
+            opacity: 1;
+            filter: blur(0px);
+            transform: translateY(0);
+        }
+
+        /* Absolute Deletion Button Overlay inside Active Slide */
+        .embla__delete-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(239, 68, 68, 0.9);
+            border: none;
+            color: white;
+            padding: 0.5rem;
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.3s ease, background-color 0.2s;
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .embla__delete-btn:hover {
+            background-color: #dc2626;
+        }
+
+        .embla__slide.is-selected:hover .embla__delete-btn {
+            opacity: 1;
+        }
+
+        /* Navigation controls container */
+        .embla__controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-top: 1.5rem;
+            padding: 0 1rem;
+        }
+
+        .embla__button {
+            background: rgba(15, 23, 42, 0.08);
+            border: none;
+            color: var(--color-dark);
+            padding: 0.6rem;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .embla__button:hover {
+            background: rgba(15, 23, 42, 0.15);
+        }
+
+        .embla__button svg {
+            width: 20px;
+            height: 20px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2.5;
+        }
+
+        /* Pagination dots */
+        .embla__dots {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .embla__dot {
+            width: 8px;
+            height: 8px;
+            background: #D9D9D9;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.3s;
+            padding: 0;
+        }
+
+        .embla__dot.is-selected {
+            background: var(--color-dark);
+            transform: scale(1.25);
+        }
+
+        /* Lightbox Fullscreen Modal */
+        .lightbox-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+        .lightbox-modal.active {
+            display: flex;
+        }
+        .lightbox-content {
+            max-width: 90%;
+            max-height: 85%;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 2.5rem;
+            color: #fff;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        .lightbox-close:hover {
+            opacity: 1;
         }
     </style>
 </head>
@@ -64,8 +277,11 @@
                 <li class="menu-item" id="menu-passwords" onclick="window.location.href = '/home'">
                     <button><i class="fas fa-key"></i> Passwords</button>
                 </li>
-                <li class="menu-item active" id="menu-notes" onclick="window.location.href = '/notes'">
+                <li class="menu-item" id="menu-notes" onclick="window.location.href = '/notes'">
                     <button><i class="fas fa-file-alt"></i> Secure Notes</button>
+                </li>
+                <li class="menu-item active" id="menu-images" onclick="window.location.href = '/note-pic'">
+                    <button><i class="fas fa-images"></i> Secure Images</button>
                 </li>
             </ul>
 
@@ -83,9 +299,13 @@
             </header>
 
             <div class="content-body">
-                <a href="/notes" class="back-link">
-                    <i class="fas fa-arrow-left"></i> Back to Secure Notes
-                </a>
+                <!-- Action Bar with Search -->
+                <div class="action-bar" style="margin-bottom: 2rem;">
+                    <div class="search-wrapper">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" class="search-input" id="searchImages" placeholder="Search images..." onkeyup="filterImages()">
+                    </div>
+                </div>
 
                 <!-- UPLOAD SECTION -->
                 <div class="upload-section glass" id="dropZone" onclick="document.getElementById('fileInput').click()">
@@ -94,15 +314,54 @@
                     <p style="color: rgba(255,255,255,0.4); font-size: 0.85rem; margin-top: 0.5rem;">Supports PNG, JPG, JPEG, GIF, WEBP</p>
                     <input type="file" id="fileInput" class="file-input" accept="image/*" onchange="uploadImage(this.files[0])">
                 </div>
+
+                <!-- EMPTY STATE -->
+                <div id="imageEmptyState" class="empty-state" style="display: none; margin-top: 3rem;">
+                    <i class="fas fa-images empty-state-icon" style="font-size: 3rem; opacity: 0.3;"></i>
+                    <h2>No secure images saved yet</h2>
+                    <p>Upload screenshot captures, scanned bills, or secure keys locally.</p>
+                </div>
+
+                <!-- EMBLA CAROUSEL SECTION -->
+                <div class="embla" id="emblaCarousel" style="display: none;">
+                    <div class="embla__viewport" id="emblaViewport">
+                        <div class="embla__container" id="emblaContainer">
+                            <!-- Slides dynamically populated here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Navigation and Pagination controls -->
+                    <div class="embla__controls">
+                        <button class="embla__button" id="prevBtn" aria-label="Previous slide">
+                            <svg viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </button>
+                        
+                        <div class="embla__dots" id="emblaDots">
+                            <!-- Dots dynamically populated -->
+                        </div>
+                        
+                        <button class="embla__button" id="nextBtn" aria-label="Next slide">
+                            <svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </button>
+                    </div>
+                </div>
             </div>
         </main>
+    </div>
+
+    <!-- LIGHTBOX / FULLSCREEN VIEW -->
+    <div class="lightbox-modal" id="lightbox" onclick="closeLightbox()">
+        <span class="lightbox-close">&times;</span>
+        <img class="lightbox-content" id="lightboxImg" src="" alt="Fullscreen preview">
     </div>
 
     <!-- Toast Notification Container -->
     <div id="toast-message" class="toast hidden" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;"></div>
 
     <script>
+        let cachedImages = [];
         let currentUser = null;
+        let emblaApi = null;
 
         // Toast notification helpers
         function showToast(message, type) {
@@ -113,7 +372,6 @@
             setTimeout(hideToast, 3000);
         }
 
-        // Helper to show sticky status toast
         function showStickyToast(message, type) {
             const toast = document.getElementById('toast-message');
             toast.textContent = message;
@@ -141,11 +399,129 @@
             }
         }
 
+        // --- FETCH IMAGES (EMBLA CAROUSEL SYSTEM) ---
+        async function fetchImages() {
+            const container = document.getElementById('emblaContainer');
+            const carouselWrapper = document.getElementById('emblaCarousel');
+            const emptyState = document.getElementById('imageEmptyState');
+            
+            // Clean up old Embla instance if it exists
+            if (emblaApi) {
+                emblaApi.destroy();
+                emblaApi = null;
+            }
+            container.innerHTML = '';
+            
+            try {
+                const response = await fetch('/api/images');
+                if (response.ok) {
+                    const result = await response.json();
+                    cachedImages = result.images;
+                    
+                    if (cachedImages.length === 0) {
+                        emptyState.style.display = 'block';
+                        carouselWrapper.style.display = 'none';
+                        return;
+                    }
+                    emptyState.style.display = 'none';
+                    carouselWrapper.style.display = 'block';
+
+                    cachedImages.forEach((item) => {
+                        const slide = document.createElement('div');
+                        slide.className = 'embla__slide';
+                        slide.id = `img-slide-${item.id}`;
+                        
+                        const uploadUrl = `/static/uploads/${item.filename}`;
+
+                        slide.innerHTML = `
+                            <button class="embla__delete-btn" onclick="event.stopPropagation(); deleteImageRecord(${item.id})">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                            <div class="embla__card-inner" onclick="openLightbox('${uploadUrl}')">
+                                <img src="${uploadUrl}" alt="${item.original_name}" loading="lazy">
+                            </div>
+                            <div class="embla__title-label">
+                                ${item.original_name}
+                            </div>
+                        `;
+                        container.appendChild(slide);
+                    });
+                    
+                    // Initialize Embla Carousel API
+                    initEmblaCarousel();
+                }
+            } catch (err) {
+                console.error("Error retrieving images", err);
+                showToast("Failed to fetch secure images.", "error");
+            }
+        }
+
+        // --- EMBLA CAROUSEL INITIALIZATION & CONTROLS ---
+        function initEmblaCarousel() {
+            const emblaNode = document.getElementById('emblaViewport');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const dotsContainer = document.getElementById('emblaDots');
+            
+            dotsContainer.innerHTML = '';
+
+            // Initialize Embla API
+            emblaApi = EmblaCarousel(emblaNode, {
+                loop: true,
+                slidesToScroll: 1,
+                align: 'center'
+            });
+
+            const slides = emblaApi.slideNodes();
+            
+            // Generate Pagination Dots
+            slides.forEach((_, idx) => {
+                const dot = document.createElement('button');
+                dot.className = 'embla__dot';
+                dot.ariaLabel = `Go to slide ${idx + 1}`;
+                dot.addEventListener('click', () => emblaApi.scrollTo(idx));
+                dotsContainer.appendChild(dot);
+            });
+
+            // Update selected class on snaps
+            const updateClasses = () => {
+                const selectedIdx = emblaApi.selectedScrollSnap();
+                
+                // Toggle slide active classes
+                slides.forEach((slide, idx) => {
+                    if (idx === selectedIdx) {
+                        slide.classList.add('is-selected');
+                    } else {
+                        slide.classList.remove('is-selected');
+                    }
+                });
+
+                // Toggle dots active classes
+                const dots = dotsContainer.querySelectorAll('.embla__dot');
+                dots.forEach((dot, idx) => {
+                    if (idx === selectedIdx) {
+                        dot.classList.add('is-selected');
+                    } else {
+                        dot.classList.remove('is-selected');
+                    }
+                });
+            };
+
+            // Set up event listeners
+            emblaApi.on('select', updateClasses);
+            emblaApi.on('init', updateClasses);
+            
+            prevBtn.addEventListener('click', () => emblaApi.scrollPrev());
+            nextBtn.addEventListener('click', () => emblaApi.scrollNext());
+
+            // Run initial class assignment
+            updateClasses();
+        }
+
         // --- UPLOAD IMAGE ---
         async function uploadImage(file) {
             if (!file) return;
 
-            // Check file type
             const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
             if (!allowedTypes.includes(file.type)) {
                 showToast("Invalid file type. Please upload an image.", "error");
@@ -163,14 +539,97 @@
                 });
                 const result = await response.json();
                 if (response.ok) {
-                    showToast("Image uploaded and saved successfully!", 'success');
+                    showToast("Image uploaded successfully!", 'success');
+                    fetchImages();
                 } else {
                     showToast(result.message || "Failed to save image.", 'error');
                 }
             } catch (err) {
                 console.error(err);
-                showToast("Failed to upload image due to connection error.", "error");
+                showToast("Failed to upload image.", "error");
             }
+        }
+
+        // --- DELETE IMAGE ---
+        async function deleteImageRecord(id) {
+            if (!confirm("Are you sure you want to delete this secure document/image permanently?")) return;
+
+            try {
+                const response = await fetch(`/api/images/${id}`, {
+                    method: 'DELETE'
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    showToast(result.message, 'success');
+                    fetchImages();
+                } else {
+                    showToast(result.message, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Failed to delete record.", "error");
+            }
+        }
+
+        // --- FILTER IMAGES ---
+        function filterImages() {
+            const query = document.getElementById('searchImages').value.toLowerCase();
+            const container = document.getElementById('emblaContainer');
+            const carouselWrapper = document.getElementById('emblaCarousel');
+            const emptyState = document.getElementById('imageEmptyState');
+            
+            // Clean up old Embla instance if it exists
+            if (emblaApi) {
+                emblaApi.destroy();
+                emblaApi = null;
+            }
+            container.innerHTML = '';
+            
+            const filtered = cachedImages.filter(item => item.original_name.toLowerCase().includes(query));
+            
+            if (filtered.length === 0) {
+                emptyState.style.display = 'block';
+                carouselWrapper.style.display = 'none';
+                return;
+            }
+            emptyState.style.display = 'none';
+            carouselWrapper.style.display = 'block';
+
+            filtered.forEach((item) => {
+                const slide = document.createElement('div');
+                slide.className = 'embla__slide';
+                slide.id = `img-slide-${item.id}`;
+                
+                const uploadUrl = `/static/uploads/${item.filename}`;
+
+                slide.innerHTML = `
+                    <button class="embla__delete-btn" onclick="event.stopPropagation(); deleteImageRecord(${item.id})">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                    <div class="embla__card-inner" onclick="openLightbox('${uploadUrl}')">
+                        <img src="${uploadUrl}" alt="${item.original_name}" loading="lazy">
+                    </div>
+                    <div class="embla__title-label">
+                        ${item.original_name}
+                    </div>
+                `;
+                container.appendChild(slide);
+            });
+            
+            // Re-initialize Embla API
+            initEmblaCarousel();
+        }
+
+        // --- LIGHTBOX FUNCTIONS ---
+        function openLightbox(src) {
+            const modal = document.getElementById('lightbox');
+            const img = document.getElementById('lightboxImg');
+            img.src = src;
+            modal.classList.add('active');
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').classList.remove('active');
         }
 
         // --- LOGOUT CONTROLLER ---
@@ -216,6 +675,7 @@
         // Run on Mount
         window.addEventListener('DOMContentLoaded', () => {
             loadProfile();
+            fetchImages();
         });
     </script>
 </body>
