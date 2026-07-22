@@ -64,7 +64,6 @@ async function handleFormSubmit(event, mode) {
             payload = {
                 name: document.getElementById('signup-name').value,
                 email: document.getElementById('signup-email').value,
-                role: 'Patient',
                 gender: document.getElementById('signup-gender').value,
                 age: parseInt(document.getElementById('signup-age').value, 10),
                 phone: document.getElementById('signup-phone').value,
@@ -107,7 +106,7 @@ async function handleFormSubmit(event, mode) {
 
     } catch (error) {
         console.error('API Error:', error);
-        showToast('Network error: Could not reach the hospital authentication server.', 'error');
+        showToast('Network error: Could not reach the VaultSync authentication server.', 'error');
     } finally {
         // Re-enable submit button
         submitBtn.textContent = originalBtnText;

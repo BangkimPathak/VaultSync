@@ -18,13 +18,12 @@ def signup():
 
     name = data.get('name', '').strip()
     email = data.get('email', '').strip().lower()
-    role = 'Patient'
     gender = data.get('gender', '').strip()
     age = data.get('age')
     phone = data.get('phone', '').strip()
     address = data.get('address', '').strip()
 
-    if not name or not email or not role or not gender or age is None or not phone or not address:
+    if not name or not email or not gender or age is None or not phone or not address:
         return jsonify({'status': 'error', 'message': 'All fields are required.'}), 400
 
     try:
@@ -40,9 +39,6 @@ def signup():
 
     if gender not in ['Male', 'Female', 'Other']:
         return jsonify({'status': 'error', 'message': 'Invalid gender option selected.'}), 400
-
-    if role not in ['Patient', 'Doctor', 'Staff', 'Other']:
-        return jsonify({'status': 'error', 'message': 'Invalid hospital role selected.'}), 400
 
     conn = None
     cursor = None
@@ -61,14 +57,14 @@ def signup():
             else:
                 # User exists but isn't verified yet. Update their details.
                 cursor.execute(
-                    "UPDATE users SET name = %s, role = %s, gender = %s, age = %s, phone_number = %s, address = %s WHERE email = %s", 
-                    (name, role, gender, age, phone, address, email)
+                    "UPDATE users SET name = %s, gender = %s, age = %s, phone_number = %s, address = %s WHERE email = %s", 
+                    (name, gender, age, phone, address, email)
                 )
         else:
             #  New/Fresh user: Insert into permanent table as unverified with blank password
             cursor.execute(
-                "INSERT INTO users (name, email, password, role, gender, age, phone_number, address, status) VALUES (%s, %s, '', %s, %s, %s, %s, %s, %s)", 
-                (name, email, role, gender, age, phone, address, 'Unverified')
+                "INSERT INTO users (name, email, password, gender, age, phone_number, address, status) VALUES (%s, %s, '', %s, %s, %s, %s, %s)", 
+                (name, email, gender, age, phone, address, 'Unverified')
             )
 
         otp = "".join([str(random.randint(0, 9)) for _ in range(6)])
@@ -240,7 +236,7 @@ def set_password_api():
         conn.commit()
 
         # Fetch verified user details to send back for frontend session
-        cursor.execute("SELECT name, email, role, gender, age, phone_number, address FROM users WHERE email = %s", (email,))
+        cursor.execute("SELECT name, email, gender, age, phone_number, address FROM users WHERE email = %s", (email,))
         verified_user = cursor.fetchone()
 
         session['user_email'] = email

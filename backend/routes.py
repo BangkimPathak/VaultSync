@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template
 from registration import verified_otp_page, set_password_page, signup, verify_otp_api, resend_otp_api, set_password_api
 from sign_up import login
-from auth import get_user_profile, logout
+from auth import get_user_profile, logout, update_user_profile
 from backend.dashboard.password_Vault_page.Password_Vault import manage_passwords, manage_password_by_id
 from backend.dashboard.notes_page.notes import (
     manage_notes,
@@ -28,11 +28,15 @@ def notes_page():
 def note_pic_page():
     return render_template('dashboard/note_pic.html')
 
+def profile_page():
+    return render_template('dashboard/profile.html')
+
 # Register HTML/Main routes
 main_bp.route('/')(index)
 main_bp.route('/home')(home)
 main_bp.route('/notes')(notes_page)
 main_bp.route('/note-pic')(note_pic_page)
+main_bp.route('/profile')(profile_page)
 
 # Register Registration routes
 registration_bp.route('/verify-otp')(verified_otp_page)
@@ -46,7 +50,8 @@ registration_bp.route('/api/set-password', methods=['POST'])(set_password_api)
 signup_bp.route('/api/login', methods=['POST'])(login)
 
 # Dashboard API routes
-dashboard_bp.route('/api/user/profile')(get_user_profile)
+dashboard_bp.route('/api/user/profile', methods=['GET'])(get_user_profile)
+dashboard_bp.route('/api/user/profile', methods=['POST'])(update_user_profile)
 dashboard_bp.route('/api/passwords', methods=['GET', 'POST'])(manage_passwords)
 dashboard_bp.route('/api/passwords/<int:pwd_id>', methods=['PUT', 'DELETE'])(manage_password_by_id)
 dashboard_bp.route('/api/notes', methods=['GET', 'POST'])(manage_notes)

@@ -49,7 +49,7 @@ def send_smtp_email_raw(from_mail, password, recipient_email, otp):
     server.login(from_mail, password)
 
     message = EmailMessage()
-    message['Subject'] = 'ABC Hospital - OTP Verification'
+    message['Subject'] = 'VaultSync - OTP Verification'
     message['From'] = from_mail
     message['To'] = recipient_email
     message.set_content(
@@ -88,7 +88,7 @@ def create_database_tables(cursor):
             gender enum("Male", "Female" , "Other") NOT NULL, 
             email VARCHAR(100) NOT NULL UNIQUE,
             password VARCHAR(255) NOT NULL,
-            role VARCHAR(50) NOT NULL,
+            role VARCHAR(50) DEFAULT NULL,
             age INT NOT NULL,
             phone_number VARCHAR(20) NOT NULL,
             address VARCHAR(255) NOT NULL,
@@ -97,6 +97,11 @@ def create_database_tables(cursor):
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    
+    # # Check and migrate users table to add profile_picture column if missing
+    # cursor.execute("SHOW COLUMNS FROM users LIKE 'profile_picture'")
+    # if not cursor.fetchone():
+    #     cursor.execute("ALTER TABLE users ADD COLUMN profile_picture VARCHAR(255) DEFAULT NULL")
     
     # otp table
     cursor.execute("""

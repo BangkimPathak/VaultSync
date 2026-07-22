@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VaultSync - My Profile</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Profile Grid Layout */
+        .profile-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        .btn-edit-credentials {
+            background: var(--color-primary);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 0.65rem 1.25rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 12px rgba(0, 123, 138, 0.2);
+            transition: all 0.2s ease;
+        }
+
+        .btn-edit-credentials:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0, 123, 138, 0.3);
+            background: #006673;
+        }
+
+        .credentials-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(15, 23, 42, 0.06);
+        }
+
+        .info-card {
+            background: rgba(15, 23, 42, 0.02);
+            border: 1px solid rgba(15, 23, 42, 0.06);
+            border-radius: 14px;
+            padding: 1rem 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .info-label {
+            font-size: 0.8rem;
+            color: rgba(15, 23, 42, 0.5);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .info-label i {
+            color: var(--color-primary);
+        }
+
+        .info-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--color-dark);
+        }
+
+        .edit-credentials-widget.hidden {
+            display: none !important;
+        }
+
+        .cancel-btn {
+            background: rgba(15, 23, 42, 0.06);
+            color: var(--color-dark);
+            border: none;
+            border-radius: 12px;
+            padding: 0.85rem 1.25rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 1rem;
+        }
+
+        .cancel-btn:hover {
+            background: rgba(15, 23, 42, 0.1);
+        }
+
+        /* Widgets Column */
+        .widget-column {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Profile Card Widget */
+        .profile-card-widget {
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .profile-widget-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 1.25rem;
+            border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+        }
+
+        .widget-avatar-container {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            overflow: hidden;
+            background: var(--color-primary);
+            position: relative;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .widget-avatar-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-widget-info h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--color-dark);
+            margin-bottom: 0.15rem;
+        }
+
+        .profile-widget-info p {
+            font-size: 0.8rem;
+            color: rgba(15, 23, 42, 0.6);
+            word-break: break-all;
+        }
+
+        /* Profile Widget Menu */
+        .profile-widget-menu {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .widget-menu-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            color: var(--color-dark);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .widget-menu-item:hover {
+            background: rgba(15, 23, 42, 0.04);
+        }
+
+        .widget-menu-item.active {
+            background: rgba(0, 123, 138, 0.08);
+            color: var(--color-primary);
+        }
+
+        .widget-menu-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .widget-menu-left i {
+            font-size: 1rem;
+        }
+
+        /* Settings Card Widget */
+        .settings-card-widget {
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .settings-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+        }
+
+        .settings-header h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--color-dark);
+        }
+
+        .settings-close-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            color: rgba(15, 23, 42, 0.4);
+            transition: color 0.2s;
+        }
+
+        .settings-close-btn:hover {
+            color: var(--color-dark);
+        }
+
+        .settings-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .settings-row label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: rgba(15, 23, 42, 0.7);
+        }
+
+        .settings-select {
+            padding: 0.4rem 0.75rem;
+            border-radius: 8px;
+            border: 1px solid rgba(15, 23, 42, 0.15);
+            background: #fff;
+            color: var(--color-dark);
+            font-size: 0.85rem;
+            outline: none;
+            cursor: pointer;
+        }
+
+        /* Edit Profile Credentials Widget */
+        .edit-credentials-widget {
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            border-radius: 24px;
+            box-shadow: 0 15px 40px rgba(15, 23, 42, 0.06);
+            padding: 2.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .edit-credentials-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+        }
+
+        .edit-credentials-header h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--color-dark);
+        }
+
+        /* Avatar Editor Section */
+        .avatar-editor-section {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            position: relative;
+        }
+
+        .large-avatar-wrapper {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+        }
+
+        .large-avatar-image {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            background: var(--color-primary);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .avatar-edit-trigger {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            background: #fff;
+            border: 1px solid rgba(15, 23, 42, 0.15);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            transition: background 0.2s;
+        }
+
+        .avatar-edit-trigger:hover {
+            background: #f1f5f9;
+        }
+
+        .avatar-edit-trigger i {
+            font-size: 0.75rem;
+            color: var(--color-primary);
+        }
+
+        .avatar-info-text h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--color-dark);
+        }
+
+        .avatar-info-text p {
+            font-size: 0.85rem;
+            color: rgba(15, 23, 42, 0.5);
+        }
+
+        /* Credentials Edit Form */
+        .credentials-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .form-row {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .form-row label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: rgba(15, 23, 42, 0.8);
+        }
+
+        .form-input {
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            border: 1px solid rgba(15, 23, 42, 0.15);
+            outline: none;
+            font-size: 0.9rem;
+            color: var(--color-dark);
+            background: #fff;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-input:focus {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(0, 123, 138, 0.15);
+        }
+
+        .form-input:disabled {
+            background: rgba(15, 23, 42, 0.03);
+            color: rgba(15, 23, 42, 0.5);
+            cursor: not-allowed;
+            border-color: rgba(15, 23, 42, 0.08);
+        }
+
+        .save-btn {
+            background: linear-gradient(135deg, #007B8A 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0.85rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 123, 138, 0.2);
+            transition: all 0.2s ease;
+            margin-top: 1rem;
+        }
+
+        .save-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(0, 123, 138, 0.3);
+        }
+
+        .save-btn:active {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="alert-container" id="alertContainer"></div>
+
+    <div class="dashboard-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <span class="brand-name">VaultSync</span>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li class="menu-item" id="menu-passwords" onclick="window.location.href = '/home'">
+                    <button><i class="fas fa-key"></i> Passwords</button>
+                </li>
+                <li class="menu-item" id="menu-notes" onclick="window.location.href = '/notes'">
+                    <button><i class="fas fa-file-alt"></i> Secure Notes</button>
+                </li>
+                <li class="menu-item" id="menu-images" onclick="window.location.href = '/note-pic'">
+                    <button><i class="fas fa-images"></i> Secure Images</button>
+                </li>
+                <li class="menu-item active" id="menu-profile" onclick="window.location.href = '/profile'">
+                    <button><i class="fas fa-user-circle"></i> Profile</button>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <li class="menu-item" style="list-style: none;">
+                    <button onclick="handleLogout()" style="color: var(--danger);"><i class="fas fa-sign-out-alt"></i> Log Out</button>
+                </li>
+            </div>
+        </aside>
+
+        <!-- Main Body Content -->
+        <main class="main-content">
+            <header class="topbar">
+                <h1 class="page-title" id="pageTitle">My Profile</h1>
+            </header>
+
+            <div class="content-body" style="padding-top: 2rem;">
+                <div class="profile-grid">
+                    <!-- Profile Card Widget (Full Width) -->
+                    <div class="profile-card-widget">
+                        <div class="profile-widget-header" style="justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 1.25rem;">
+                                <div class="widget-avatar-container">
+                                    <img id="widgetAvatar" src="/static/uploads/default-avatar.png" alt="Profile Picture" onerror="this.src='https://ui-avatars.com/api/?name=User&background=007B8A&color=fff'">
+                                </div>
+                                <div class="profile-widget-info">
+                                    <h3 id="widgetName" style="font-size: 1.25rem;">Your name</h3>
+                                    <p id="widgetEmail" style="font-size: 0.9rem;">yourname@gmail.com</p>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-edit-credentials" onclick="toggleEditCredentials()">
+                                <i class="fas fa-edit"></i> Edit Credentials
+                            </button>
+                        </div>
+
+                        <!-- Live credential display -->
+                        <div class="credentials-info-grid">
+                            <div class="info-card">
+                                <span class="info-label"><i class="fas fa-user"></i> Full Name</span>
+                                <span id="displayFullName" class="info-value">—</span>
+                            </div>
+                            <div class="info-card">
+                                <span class="info-label"><i class="fas fa-envelope"></i> Alternative Email</span>
+                                <span id="widgetAltEmail" class="info-value">—</span>
+                            </div>
+                            <div class="info-card">
+                                <span class="info-label"><i class="fas fa-phone"></i> Mobile Number</span>
+                                <span id="widgetPhone" class="info-value">—</span>
+                            </div>
+                            <div class="info-card">
+                                <span class="info-label"><i class="fas fa-birthday-cake"></i> Age</span>
+                                <span id="widgetAge" class="info-value">—</span>
+                            </div>
+                            <div class="info-card">
+                                <span class="info-label"><i class="fas fa-calendar-alt"></i> Date of Birth</span>
+                                <span id="widgetDob" class="info-value">—</span>
+                            </div>
+                            <div class="info-card">
+                                <span class="info-label"><i class="fas fa-clock"></i> Account Created</span>
+                                <span id="widgetCreatedAt" class="info-value">—</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Edit Credentials Widget (Collapsible / Full Width) -->
+                    <div class="edit-credentials-widget hidden" id="editCredentialsWidget">
+                        <div class="edit-credentials-header">
+                            <h2><i class="fas fa-user-pen" style="color: var(--color-primary); margin-right: 0.5rem;"></i> Edit Credentials</h2>
+                            <button class="settings-close-btn" type="button" onclick="toggleEditCredentials()">&times;</button>
+                        </div>
+
+                        <!-- Credentials Edit Form -->
+                        <form id="profileForm" class="credentials-form">
+                            <div class="form-row">
+                                <label for="profileName">Full Name</label>
+                                <input type="text" id="profileName" class="form-input" placeholder="Your full name" required>
+                            </div>
+                            <div class="form-row">
+                                <label for="profileAltEmail">Alternative Email</label>
+                                <input type="email" id="profileAltEmail" class="form-input" placeholder="Add Other Email">
+                            </div>
+                            <div class="form-row">
+                                <label for="profileEmail">Email Account (Primary)</label>
+                                <input type="email" id="profileEmail" class="form-input" disabled>
+                            </div>
+                            <div class="form-row">
+                                <label for="profilePhone">Mobile Number</label>
+                                <input type="text" id="profilePhone" class="form-input" placeholder="Add / Change number" required>
+                            </div>
+                            <div class="form-row">
+                                <label for="profileAge">Age</label>
+                                <input type="number" id="profileAge" class="form-input" placeholder="Your age" required>
+                            </div>
+                            <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+                                <button type="submit" id="saveBtn" class="save-btn" style="flex: 1;">Save Changes</button>
+                                <button type="button" class="cancel-btn" onclick="toggleEditCredentials()">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-message" class="toast hidden" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;"></div>
+
+    <script src="{{ url_for('static', filename='js/profile.js') }}"></script>
+</body>
+</html>
